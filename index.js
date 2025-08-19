@@ -27,19 +27,11 @@ app.get('/', (req, res) => {
 // Listar todas as tarefas
 app.get('/tasks', async (req, res) => {
   try {
-    // Teste de conexão primeiro
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
-    console.log('DATABASE_URL starts with postgresql:', process.env.DATABASE_URL?.startsWith('postgresql'));
-    
-    // Comentar temporariamente
-    // const tasks = await prisma.task.findMany();
-    // res.json(tasks);
-    
-    // Retorno temporário
-    res.json([]);
+    const tasks = await prisma.task.findMany();
+    res.json(tasks);
   } catch (error) {
     console.error('Erro ao listar tarefas:', error);
-    res.status(500).json({ error: 'Erro ao listar tarefas', details: error.message });
+    res.status(500).json({ error: 'Erro ao listar tarefas' });
   }
 });
 
