@@ -7,7 +7,7 @@ const prisma = new PrismaClient(); // Instancia o PrismaClient
 
 app.use(express.json());
 app.use(cors({
- origin: 'http://localhost:3000' // Permite apenas o frontend React
+  origin: '*' // Permite qualquer origem por enquanto
 }));
 
 // Rota raiz para testar se o servidor está funcionando
