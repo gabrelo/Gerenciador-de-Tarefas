@@ -10,57 +10,67 @@ function App() {
   const [editTask, setEditTask] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    axios.get('http://localhost:3001/tasks')
-      .then(response => {
-        setTasks(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        setError('Erro ao carregar tarefas: ' + (error.response?.data || error.message));
-        setLoading(false);
-      });
+    fetchTasks();
   }, []);
 
-  const handleSubmit = (e) => {
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:3001/tasks');
+      setTasks(response.data);
+      setLoading(false);
+    } catch (error) {
+      setError('Erro ao carregar tarefas: ' + (error.response?.data?.error || error.message));
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    axios.post('http://localhost:3001/tasks', newTask)
-      .then(response => {
-        setTasks([...tasks, response.data]);
-        setNewTask({ title: '', description: '', status: 'pendente' });
-      })
-      .catch(error => setError('Erro ao criar tarefa: ' + (error.response?.data || error.message)));
+    try {
+      const response = await axios.post('http://localhost:3001/tasks', newTask, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      setTasks([...tasks, response.data]);
+      setNewTask({ title: '', description: '', status: 'pendente' });
+    } catch (error) {
+      setError('Erro ao criar tarefa: ' + (error.response?.data?.error || error.message));
+    }
   };
 
-  const handleFinish = (id) => {
-    console.log(`Finalizando tarefa com id: ${id}`);
-    axios.put(`http://localhost:3001/tasks/${id}/finish`)
-      .then(response => {
-        setTasks(tasks.map(task => task.id === id ? response.data : task));
-      })
-      .catch(error => setError('Erro ao finalizar tarefa: ' + error.message));
+  const handleFinish = async (id) => {
+    try {
+      const response = await axios.put(`http://localhost:3001/tasks/${id}/finish`);
+      setTasks(tasks.map(task => task.id === id ? response.data : task));
+    } catch (error) {
+      setError('Erro ao finalizar tarefa: ' + error.message);
+    }
   };
 
-  const handleDelete = (id) => {
-    console.log(`Deletando tarefa com id: ${id}`);
-    axios.delete(`http://localhost:3001/tasks/${id}`)
-      .then(() => setTasks(tasks.filter(task => task.id !== id)))
-      .catch(error => setError('Erro ao deletar: ' + error.message));
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3001/tasks/${id}`);
+      setTasks(tasks.filter(task => task.id !== id));
+    } catch (error) {
+      setError('Erro ao deletar tarefa: ' + error.message);
+    }
   };
 
   const handleEdit = (task) => {
-    setEditTask({ ...task, title: task.title || '', description: task.description || '', status: task.status || 'pendente' });
+    setEditTask({ ...task });
   };
 
-  const handleSaveEdit = (e) => {
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
-    console.log('Salvando tarefa com ID:', editTask.id, 'Dados:', editTask);
-    axios.put(`http://localhost:3001/tasks/${editTask.id}`, editTask)
-      .then(response => {
-        setTasks(tasks.map(task => task.id === editTask.id ? response.data : task));
-        setEditTask(null);
-      })
-      .catch(error => setError('Erro ao editar: ' + (error.response?.data || error.message)));
+    try {
+      const response = await axios.put(`http://localhost:3001/tasks/${editTask.id}`, editTask, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      setTasks(tasks.map(task => task.id === editTask.id ? response.data : task));
+      setEditTask(null);
+    } catch (error) {
+      setError('Erro ao editar tarefa: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   if (loading) return <p>Carregando...</p>;
@@ -69,7 +79,7 @@ function App() {
   return (
     <div className="app">
       <h1>Gerenciador de Tarefas</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="task-form">
         <input
           type="text"
           value={newTask.title}
@@ -93,10 +103,10 @@ function App() {
         </select>
         <button type="submit">Adicionar</button>
       </form>
-      <ul>
+      <ul className="task-list">
         {tasks.map(task => (
-          <li key={task.id}>
-            {task.title} - <span className={`status-indicator status-${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span>
+          <li key={task.id} className="task-item">
+            <span>{task.title} - <span className={`status-${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span></span>
             <div className="button-group">
               <button onClick={() => handleFinish(task.id)}>Finalizar</button>
               <button onClick={() => handleDelete(task.id)}>Deletar</button>
@@ -107,7 +117,7 @@ function App() {
       </ul>
       {editTask && (
         <div className="modal">
-          <form onSubmit={handleSaveEdit}>
+          <form onSubmit={handleSaveEdit} className="edit-form">
             <input
               type="text"
               value={editTask.title || ''}
