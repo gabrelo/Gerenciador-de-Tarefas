@@ -1,16 +1,23 @@
+// Configuração do banco de dados
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Para Supabase, certifique-se de que a URL inclui ?pgbouncer=true&connection_limit=1
 }
 
 generator client {
   provider = "prisma-client-js"
+  // Configurações específicas para Supabase
+  previewFeatures = []
 }
 
 model Task {
   id          Int      @id @default(autoincrement())
-  title       String
+  title       String   @unique // Título único para evitar duplicatas
   description String?
-  status      String
+  status      String   @default("pendente") // Status padrão
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt // Campo para tracking de mudanças
+
+  @@map("tasks") // Nome da tabela no banco
 }
